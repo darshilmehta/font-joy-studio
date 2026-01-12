@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Lock, LockOpen, ArrowUpDown, Bookmark, BookmarkCheck } from "lucide-react";
 import { FontData } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
@@ -13,8 +13,7 @@ interface FontSectionProps {
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
   isDragOver?: boolean;
-  text: string;
-  onTextChange: (text: string) => void;
+  defaultText: string;
 }
 
 export function FontSection({
@@ -27,24 +26,10 @@ export function FontSection({
   onDragOver,
   onDrop,
   isDragOver,
-  text,
-  onTextChange,
+  defaultText,
 }: FontSectionProps) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showBookmarkTooltip, setShowBookmarkTooltip] = useState(false);
-  const textRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (textRef.current && textRef.current.innerText !== text) {
-      textRef.current.innerText = text;
-    }
-  }, []);
-
-  const handleTextInput = () => {
-    if (textRef.current) {
-      onTextChange(textRef.current.innerText);
-    }
-  };
 
   const handleBookmark = () => {
     setIsBookmarked(true);
@@ -82,13 +67,12 @@ export function FontSection({
             </div>
           </div>
 
-          {/* Text Display */}
+          {/* Text Display - Uncontrolled contentEditable */}
           <div className="flex-1 min-w-0">
             <div
-              ref={textRef}
               contentEditable
               suppressContentEditableWarning
-              onInput={handleTextInput}
+              dangerouslySetInnerHTML={{ __html: defaultText }}
               className={cn(
                 "outline-none transition-all duration-300 animate-fade-in",
                 position === "header" 
@@ -96,9 +80,7 @@ export function FontSection({
                   : "text-base md:text-lg leading-relaxed text-foreground/90"
               )}
               style={{ fontFamily: `"${font.family}", ${font.category}` }}
-            >
-              {text}
-            </div>
+            />
           </div>
 
           {/* Action Icons */}
