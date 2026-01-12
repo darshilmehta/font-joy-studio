@@ -25,8 +25,6 @@ export default function Index() {
   const [bodyFont, setBodyFont] = useState<FontData>(fonts[1]);
   const [headerLocked, setHeaderLocked] = useState(false);
   const [bodyLocked, setBodyLocked] = useState(false);
-  const [headerText, setHeaderText] = useState(DEFAULT_HEADER_TEXT);
-  const [bodyText, setBodyText] = useState(DEFAULT_BODY_TEXT);
   const [activeTab, setActiveTab] = useState<TabType>("pairing");
   const [dragOverPosition, setDragOverPosition] = useState<"header" | "body" | null>(null);
   const [showTooltip, setShowTooltip] = useState(true);
@@ -220,6 +218,7 @@ export default function Index() {
       {/* Font Sections */}
       <main className="flex-1">
         <FontSection
+          key={`header-${headerFont.family}`}
           font={headerFont}
           position="header"
           isLocked={headerLocked}
@@ -236,11 +235,11 @@ export default function Index() {
           onDragOver={handleDragOver("header")}
           onDrop={handleDrop("header")}
           isDragOver={dragOverPosition === "header"}
-          text={headerText}
-          onTextChange={setHeaderText}
+          defaultText={DEFAULT_HEADER_TEXT}
         />
 
         <FontSection
+          key={`body-${bodyFont.family}`}
           font={bodyFont}
           position="body"
           isLocked={bodyLocked}
@@ -257,8 +256,7 @@ export default function Index() {
           onDragOver={handleDragOver("body")}
           onDrop={handleDrop("body")}
           isDragOver={dragOverPosition === "body"}
-          text={bodyText}
-          onTextChange={setBodyText}
+          defaultText={DEFAULT_BODY_TEXT}
         />
       </main>
 
