@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type TabType = "pairing" | "popular" | "foundry";
+type TabType = "popular" | "foundry";
 
 interface TabNavProps {
   activeTab: TabType;
@@ -9,7 +9,6 @@ interface TabNavProps {
 
 export function TabNav({ activeTab, onTabChange }: TabNavProps) {
   const tabs: { id: TabType; label: string }[] = [
-    { id: "pairing", label: "Font Pairing" },
     { id: "popular", label: "Popular" },
     { id: "foundry", label: "Same Foundry" },
   ];

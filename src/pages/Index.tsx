@@ -18,14 +18,14 @@ import {
 const DEFAULT_HEADER_TEXT = "All in the recognition of inherent dignity";
 const DEFAULT_BODY_TEXT = `Underpinned by Newton's immutable logic – what goes up, must come down – this new field of energy storage technology is, in principle, remarkably simple. When green energy is plentiful, use it to haul a colossal weight to a predetermined height. When renewables are limited, release the load, powering a generator with the downward gravitational pull.`;
 
-type TabType = "pairing" | "popular" | "foundry";
+type TabType = "popular" | "foundry";
 
 export default function Index() {
   const [headerFont, setHeaderFont] = useState<FontData>(fonts[0]);
   const [bodyFont, setBodyFont] = useState<FontData>(fonts[1]);
   const [headerLocked, setHeaderLocked] = useState(false);
   const [bodyLocked, setBodyLocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>("pairing");
+  const [activeTab, setActiveTab] = useState<TabType>("popular");
   const [dragOverPosition, setDragOverPosition] = useState<"header" | "body" | null>(null);
   const [showTooltip, setShowTooltip] = useState(true);
   const [popularIndex, setPopularIndex] = useState(0);
@@ -209,10 +209,7 @@ export default function Index() {
 
       {/* Tabs */}
       <div className="container mx-auto px-6 md:px-12 pb-8">
-        <div className="flex flex-col md:flex-row md:items-center gap-4">
-          <span className="text-sm text-muted-foreground">Font Pairing</span>
-          <TabNav activeTab={activeTab} onTabChange={handleTabChange} />
-        </div>
+        <TabNav activeTab={activeTab} onTabChange={handleTabChange} />
       </div>
 
       {/* Font Sections */}
@@ -223,14 +220,6 @@ export default function Index() {
           position="header"
           isLocked={headerLocked}
           onLockToggle={() => setHeaderLocked(!headerLocked)}
-          onShuffle={() => {
-            if (!headerLocked) {
-              const newHeader = bodyLocked 
-                ? getComplementaryFont(bodyFont, "header")
-                : fonts[Math.floor(Math.random() * fonts.length)];
-              setHeaderFont(newHeader);
-            }
-          }}
           onDragStart={handleDragStart("header")}
           onDragOver={handleDragOver("header")}
           onDrop={handleDrop("header")}
@@ -244,14 +233,6 @@ export default function Index() {
           position="body"
           isLocked={bodyLocked}
           onLockToggle={() => setBodyLocked(!bodyLocked)}
-          onShuffle={() => {
-            if (!bodyLocked) {
-              const newBody = headerLocked 
-                ? getComplementaryFont(headerFont, "body")
-                : getComplementaryFont(headerFont, "body");
-              setBodyFont(newBody);
-            }
-          }}
           onDragStart={handleDragStart("body")}
           onDragOver={handleDragOver("body")}
           onDrop={handleDrop("body")}
