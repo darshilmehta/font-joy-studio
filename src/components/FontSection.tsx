@@ -1,0 +1,161 @@
+import { useState, useRef, useEffect } from "react";
+import { Lock, LockOpen, ArrowUpDown, Bookmark, BookmarkCheck } from "lucide-react";
+import { FontData } from "@/lib/fonts";
+import { cn } from "@/lib/utils";
+
+interface FontSectionProps {
+  font: FontData;
+  position: "header" | "body";
+  isLocked: boolean;
+  onLockToggle: () => void;
+  onShuffle: () => void;
+  onDragStart: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+  isDragOver?: boolean;
+  text: string;
+  onTextChange: (text: string) => void;
+}
+
+export function FontSection({
+  font,
+  position,
+  isLocked,
+  onLockToggle,
+  onShuffle,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  isDragOver,
+  text,
+  onTextChange,
+}: FontSectionProps) {
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showBookmarkTooltip, setShowBookmarkTooltip] = useState(false);
+  const textRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (textRef.current && textRef.current.innerText !== text) {
+      textRef.current.innerText = text;
+    }
+  }, []);
+
+  const handleTextInput = () => {
+    if (textRef.current) {
+      onTextChange(textRef.current.innerText);
+    }
+  };
+
+  const handleBookmark = () => {
+    setIsBookmarked(true);
+    setShowBookmarkTooltip(true);
+    setTimeout(() => setShowBookmarkTooltip(false), 1500);
+  };
+
+  return (
+    <div
+      className={cn(
+        "relative transition-all duration-300",
+        position === "body" && "bg-body-section",
+        isDragOver && "ring-2 ring-foreground/20 ring-inset"
+      )}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
+      <div className="container mx-auto px-6 md:px-12 py-8 md:py-12">
+        <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-start">
+          {/* Font Card - Draggable */}
+          <div
+            draggable
+            onDragStart={onDragStart}
+            className={cn(
+              "flex-shrink-0 w-full md:w-36 cursor-grab active:cursor-grabbing",
+              "select-none transition-all duration-200",
+              "hover:opacity-80"
+            )}
+          >
+            <div className="text-sm font-medium text-foreground">
+              {font.family}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              {font.foundry}
+            </div>
+          </div>
+
+          {/* Text Display */}
+          <div className="flex-1 min-w-0">
+            <div
+              ref={textRef}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={handleTextInput}
+              className={cn(
+                "outline-none transition-all duration-300 animate-fade-in",
+                position === "header" 
+                  ? "text-3xl md:text-5xl lg:text-6xl font-normal leading-tight" 
+                  : "text-base md:text-lg leading-relaxed text-foreground/90"
+              )}
+              style={{ fontFamily: `"${font.family}", ${font.category}` }}
+            >
+              {text}
+            </div>
+          </div>
+
+          {/* Action Icons */}
+          <div className="flex md:flex-col items-center gap-4 md:gap-3 flex-shrink-0">
+            <button
+              onClick={onLockToggle}
+              className={cn(
+                "p-2 rounded-lg transition-all duration-200",
+                "hover:bg-foreground/5",
+                isLocked ? "text-icon-active" : "text-icon-default hover:text-icon-hover"
+              )}
+              title={isLocked ? "Unlock font" : "Lock font"}
+            >
+              {isLocked ? (
+                <Lock className="w-5 h-5" />
+              ) : (
+                <LockOpen className="w-5 h-5" />
+              )}
+            </button>
+
+            <button
+              onClick={onShuffle}
+              className={cn(
+                "p-2 rounded-lg transition-all duration-200",
+                "text-icon-default hover:text-icon-hover hover:bg-foreground/5",
+                "hover:scale-105 active:scale-95"
+              )}
+              title="Shuffle this font"
+            >
+              <ArrowUpDown className="w-5 h-5" />
+            </button>
+
+            <div className="relative">
+              <button
+                onClick={handleBookmark}
+                className={cn(
+                  "p-2 rounded-lg transition-all duration-200",
+                  "hover:bg-foreground/5",
+                  isBookmarked ? "text-icon-active" : "text-icon-default hover:text-icon-hover"
+                )}
+                title="Bookmark this font"
+              >
+                {isBookmarked ? (
+                  <BookmarkCheck className="w-5 h-5" />
+                ) : (
+                  <Bookmark className="w-5 h-5" />
+                )}
+              </button>
+              {showBookmarkTooltip && (
+                <div className="absolute right-0 md:right-auto md:left-full md:ml-2 top-0 md:top-1/2 md:-translate-y-1/2 mt-10 md:mt-0 bg-foreground text-background text-xs px-2 py-1 rounded whitespace-nowrap animate-fade-in">
+                  Saved!
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
