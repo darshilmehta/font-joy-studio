@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, LockOpen, ArrowUpDown, Bookmark, BookmarkCheck } from "lucide-react";
+import { Lock, LockOpen, GripVertical, Bookmark, BookmarkCheck } from "lucide-react";
 import { FontData } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 
@@ -8,7 +8,6 @@ interface FontSectionProps {
   position: "header" | "body";
   isLocked: boolean;
   onLockToggle: () => void;
-  onShuffle: () => void;
   onDragStart: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
@@ -21,7 +20,6 @@ export function FontSection({
   position,
   isLocked,
   onLockToggle,
-  onShuffle,
   onDragStart,
   onDragOver,
   onDrop,
@@ -49,16 +47,8 @@ export function FontSection({
     >
       <div className="container mx-auto px-6 md:px-12 py-8 md:py-12">
         <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-start">
-          {/* Font Card - Draggable */}
-          <div
-            draggable
-            onDragStart={onDragStart}
-            className={cn(
-              "flex-shrink-0 w-full md:w-36 cursor-grab active:cursor-grabbing",
-              "select-none transition-all duration-200",
-              "hover:opacity-80"
-            )}
-          >
+          {/* Font Card - Non-draggable, just displays info */}
+          <div className="flex-shrink-0 w-full md:w-36">
             <div className="text-sm font-medium text-foreground">
               {font.family}
             </div>
@@ -101,17 +91,19 @@ export function FontSection({
               )}
             </button>
 
-            <button
-              onClick={onShuffle}
+            {/* Drag Handle Button */}
+            <div
+              draggable
+              onDragStart={onDragStart}
               className={cn(
-                "p-2 rounded-lg transition-all duration-200",
+                "p-2 rounded-lg transition-all duration-200 cursor-grab active:cursor-grabbing",
                 "text-icon-default hover:text-icon-hover hover:bg-foreground/5",
                 "hover:scale-105 active:scale-95"
               )}
-              title="Shuffle this font"
+              title="Drag to swap with other font"
             >
-              <ArrowUpDown className="w-5 h-5" />
-            </button>
+              <GripVertical className="w-5 h-5" />
+            </div>
 
             <div className="relative">
               <button
