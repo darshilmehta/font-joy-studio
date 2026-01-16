@@ -1,42 +1,67 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
-import { fonts, foundries, searchFonts, searchFoundries, loadGoogleFont } from "@/lib/fonts";
+import { Search, Loader2 } from "lucide-react";
+import { fonts as localFonts, foundries, loadGoogleFont, FontData } from "@/lib/fonts";
+import { useGoogleFonts, GoogleFontData } from "@/hooks/useGoogleFonts";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export function GlobalSearchBar() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const debouncedQuery = useDebounce(query, 300);
+
+  // Fetch fonts from Google Fonts API
+  const { data: apiData, isLoading } = useGoogleFonts({
+    search: debouncedQuery,
+    enabled: debouncedQuery.length > 1,
+  });
 
   const results = useMemo(() => {
-    if (!query.trim()) return { fonts: [], foundries: [] };
+    if (!query.trim()) return { fonts: [], foundries: [], apiFonts: [] };
     
     const lowerQuery = query.toLowerCase();
     
-    // Search fonts
-    const matchedFonts = fonts.filter(font => 
+    // Search local fonts (for immediate results)
+    const matchedLocalFonts = localFonts.filter(font => 
       font.family.toLowerCase().includes(lowerQuery)
-    ).slice(0, 5);
+    ).slice(0, 3);
     
     // Search foundries
     const matchedFoundries = foundries.filter(foundry => 
       foundry.name.toLowerCase().includes(lowerQuery)
     ).slice(0, 5);
     
-    // Load matched fonts for preview
-    matchedFonts.forEach(f => loadGoogleFont(f.family, [400]));
+    // API fonts (excluding ones we already have locally)
+    const localFamilies = new Set(matchedLocalFonts.map(f => f.family));
+    const apiFonts = (apiData?.fonts || [])
+      .filter(f => !localFamilies.has(f.family))
+      .slice(0, 10);
     
-    return { fonts: matchedFonts, foundries: matchedFoundries };
-  }, [query]);
+    // Load matched fonts for preview
+    matchedLocalFonts.forEach(f => loadGoogleFont(f.family, [400]));
+    apiFonts.forEach(f => loadGoogleFont(f.family, [400]));
+    
+    return { 
+      fonts: matchedLocalFonts, 
+      foundries: matchedFoundries,
+      apiFonts
+    };
+  }, [query, apiData]);
 
-  const hasResults = results.fonts.length > 0 || results.foundries.length > 0;
+  const hasResults = results.fonts.length > 0 || results.foundries.length > 0 || results.apiFonts.length > 0;
+  const totalFonts = results.fonts.length + results.apiFonts.length;
 
-  const handleSelectFont = (family: string) => {
+  const handleSelectFont = (family: string, foundrySlug?: string) => {
     // Navigate to the font's foundry page
-    const font = fonts.find(f => f.family === family);
-    if (font) {
-      navigate(`/foundry/${font.foundrySlug}`);
+    if (foundrySlug) {
+      navigate(`/foundry/${foundrySlug}`);
+    } else {
+      const font = localFonts.find(f => f.family === family);
+      if (font) {
+        navigate(`/foundry/${font.foundrySlug}`);
+      }
     }
     setQuery("");
   };
@@ -55,21 +80,25 @@ export function GlobalSearchBar() {
           isFocused && "ring-2 ring-foreground/10"
         )}
       >
-        <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        {isLoading && debouncedQuery ? (
+          <Loader2 className="w-4 h-4 text-muted-foreground flex-shrink-0 animate-spin" />
+        ) : (
+          <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        )}
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-          placeholder="Search fonts, foundries, designers..."
+          placeholder="Search all Google Fonts, foundries, designers..."
           className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
         />
       </div>
 
       {/* Dropdown */}
       {hasResults && isFocused && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-50 animate-slide-up">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-xl shadow-lg overflow-hidden z-50 animate-slide-up max-h-[60vh] overflow-y-auto">
           {/* Foundries */}
           {results.foundries.length > 0 && (
             <>
@@ -108,12 +137,19 @@ export function GlobalSearchBar() {
             </>
           )}
           
-          {/* Fonts */}
-          {results.fonts.length > 0 && (
+          {/* All Fonts (combined local + API) */}
+          {totalFonts > 0 && (
             <>
-              <div className="px-5 py-2 text-xs font-medium text-muted-foreground bg-secondary/50">
-                Fonts
+              <div className="px-5 py-2 text-xs font-medium text-muted-foreground bg-secondary/50 flex items-center justify-between">
+                <span>Fonts</span>
+                {apiData && (
+                  <span className="text-[10px] text-muted-foreground/70">
+                    {apiData.total.toLocaleString()} fonts available
+                  </span>
+                )}
               </div>
+              
+              {/* Local fonts first */}
               {results.fonts.map((font) => (
                 <button
                   key={font.family}
@@ -138,7 +174,40 @@ export function GlobalSearchBar() {
                   </span>
                 </button>
               ))}
+              
+              {/* API fonts */}
+              {results.apiFonts.map((font) => (
+                <button
+                  key={font.family}
+                  onClick={() => handleSelectFont(font.family, font.foundrySlug)}
+                  className={cn(
+                    "w-full px-5 py-3 text-left",
+                    "hover:bg-secondary transition-colors duration-150",
+                    "flex items-center justify-between"
+                  )}
+                >
+                  <div>
+                    <div 
+                      className="font-medium"
+                      style={{ fontFamily: `"${font.family}", ${font.category}` }}
+                    >
+                      {font.family}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Google Fonts</div>
+                  </div>
+                  <span className="text-xs text-muted-foreground capitalize">
+                    {font.category}
+                  </span>
+                </button>
+              ))}
             </>
+          )}
+          
+          {/* Loading state */}
+          {isLoading && debouncedQuery && (
+            <div className="px-5 py-4 text-sm text-muted-foreground text-center">
+              Searching all Google Fonts...
+            </div>
           )}
         </div>
       )}
