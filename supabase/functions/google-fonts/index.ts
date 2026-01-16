@@ -5,24 +5,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Google Fonts API key - this is a public/publishable key
-const GOOGLE_FONTS_API_KEY = 'AIzaSyAPQPYOphKjL9HNF9RtlgKVTzNBRqkEMsI';
+// Use the public Google Fonts metadata endpoint (no API key required)
+const GOOGLE_FONTS_METADATA_URL = 'https://fonts.google.com/metadata/fonts';
 
-interface GoogleFont {
+interface FontMetadata {
   family: string;
-  variants: string[];
-  subsets: string[];
+  displayName?: string;
   category: string;
-  version: string;
+  size: number;
+  subsets: string[];
+  fonts: Record<string, {
+    thickness: number;
+    slant: number;
+    width: number;
+    lineHeight: number;
+  }>;
+  axes?: Array<{
+    tag: string;
+    min: number;
+    max: number;
+    defaultValue: number;
+  }>;
+  designers: string[];
   lastModified: string;
-  files: Record<string, string>;
-  kind: string;
-  menu: string;
+  dateAdded: string;
+  popularity: number;
+  trending: number;
+  defaultSort: number;
+  stroke?: string;
+  classifications?: string[];
 }
 
-interface GoogleFontsResponse {
-  kind: string;
-  items: GoogleFont[];
+interface MetadataResponse {
+  familyMetadataList: FontMetadata[];
+  promotedScript?: unknown;
 }
 
 serve(async (req) => {
@@ -55,52 +71,93 @@ serve(async (req) => {
 
     console.log(`Fetching Google Fonts - search: ${searchQuery}, category: ${category}, sort: ${sort}`);
 
-    console.log(`Fetching Google Fonts - search: ${searchQuery}, category: ${category}, sort: ${sort}`);
-
-    // Fetch from Google Fonts API
-    const apiUrl = `https://www.googleapis.com/webfonts/v1/webfonts?key=${GOOGLE_FONTS_API_KEY}&sort=${sort}`;
-    const response = await fetch(apiUrl);
+    // Fetch from Google Fonts metadata endpoint (no API key required!)
+    const response = await fetch(GOOGLE_FONTS_METADATA_URL, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; FontJoyStudio/1.0)',
+      }
+    });
     
     if (!response.ok) {
-      throw new Error(`Google Fonts API error: ${response.status}`);
+      throw new Error(`Google Fonts metadata error: ${response.status}`);
     }
 
-    const data: GoogleFontsResponse = await response.json();
-    console.log(`Received ${data.items.length} fonts from Google Fonts API`);
+    const text = await response.text();
+    // The response starts with ")]}'" which needs to be stripped
+    const jsonText = text.replace(/^\)\]\}'/, '');
+    const data: MetadataResponse = JSON.parse(jsonText);
+    
+    console.log(`Received ${data.familyMetadataList.length} fonts from Google Fonts metadata`);
 
-    // Transform and filter the data
-    let fonts = data.items.map((font) => {
-      // Extract weights from variants
-      const weights = font.variants
-        .filter(v => !v.includes('italic'))
-        .map(v => v === 'regular' ? 400 : parseInt(v))
+    // Transform the data
+    let fonts = data.familyMetadataList.map((font) => {
+      // Extract weights from fonts object
+      const weights = Object.keys(font.fonts)
+        .filter(key => !key.includes('i')) // Exclude italic variants
+        .map(key => parseInt(key) || 400)
         .filter(w => !isNaN(w))
         .sort((a, b) => a - b);
 
-      // Create foundry slug from the font family (we'll enhance this later)
-      const foundrySlug = font.family.toLowerCase().replace(/\s+/g, '-');
+      // Map category to our format
+      const categoryMap: Record<string, string> = {
+        'Sans Serif': 'sans-serif',
+        'Serif': 'serif',
+        'Display': 'display',
+        'Handwriting': 'handwriting',
+        'Monospace': 'monospace',
+      };
+
+      // Create foundry slug from designer name
+      const designer = font.designers[0] || 'Google Fonts';
+      const foundrySlug = designer.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
       return {
         family: font.family,
-        category: font.category as "sans-serif" | "serif" | "display" | "handwriting" | "monospace",
+        category: (categoryMap[font.category] || font.category.toLowerCase()) as "sans-serif" | "serif" | "display" | "handwriting" | "monospace",
         weights: weights.length > 0 ? weights : [400],
-        variants: font.variants,
+        variants: Object.keys(font.fonts),
         subsets: font.subsets,
-        version: font.version,
+        version: 'v1',
         lastModified: font.lastModified,
-        files: font.files,
-        menu: font.menu,
-        foundry: "Google Fonts", // Default, will be enriched by metadata
+        files: {},
+        menu: `https://fonts.gstatic.com/s/${font.family.toLowerCase().replace(/\s+/g, '')}/v1/menu.woff2`,
+        foundry: designer,
         foundrySlug: foundrySlug,
-        legibility: font.category === 'display' || font.category === 'handwriting' ? 'medium' : 'high' as "high" | "medium" | "low",
+        legibility: (font.category === 'Display' || font.category === 'Handwriting') ? 'medium' : 'high' as "high" | "medium" | "low",
+        popularity: font.popularity,
+        trending: font.trending,
+        dateAdded: font.dateAdded,
+        designers: font.designers,
+        classifications: font.classifications || [],
       };
     });
+
+    // Sort first (before filtering for better results)
+    switch (sort) {
+      case 'alpha':
+        fonts.sort((a, b) => a.family.localeCompare(b.family));
+        break;
+      case 'date':
+        fonts.sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime());
+        break;
+      case 'trending':
+        fonts.sort((a, b) => a.trending - b.trending);
+        break;
+      case 'popularity':
+      default:
+        fonts.sort((a, b) => a.popularity - b.popularity);
+        break;
+    }
+
+    const totalCount = fonts.length;
 
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       fonts = fonts.filter(font => 
-        font.family.toLowerCase().includes(query)
+        font.family.toLowerCase().includes(query) ||
+        font.foundry.toLowerCase().includes(query) ||
+        font.designers.some(d => d.toLowerCase().includes(query))
       );
     }
 
@@ -114,11 +171,11 @@ serve(async (req) => {
       fonts = fonts.slice(0, limit);
     }
 
-    console.log(`Returning ${fonts.length} fonts after filtering`);
+    console.log(`Returning ${fonts.length} fonts after filtering (total: ${totalCount})`);
 
     return new Response(JSON.stringify({ 
       fonts,
-      total: data.items.length,
+      total: totalCount,
       filtered: fonts.length
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
