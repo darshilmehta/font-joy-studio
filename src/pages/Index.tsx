@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { FontSection } from "@/components/FontSection";
-import { SearchBar } from "@/components/SearchBar";
+import { GlobalSearchBar } from "@/components/GlobalSearchBar";
 import { TabNav } from "@/components/TabNav";
 import { ShuffleTooltip } from "@/components/ShuffleTooltip";
 import {
@@ -182,14 +182,14 @@ export default function Index() {
       <header className="border-b border-border/50">
         <div className="container mx-auto px-6 md:px-12 py-4 flex items-center justify-between gap-4">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <Link to="/" className="flex-shrink-0">
             <div className="w-10 h-10 bg-foreground rounded-lg flex items-center justify-center">
               <span className="text-background font-bold text-xl">F</span>
             </div>
-          </div>
+          </Link>
 
           {/* Search */}
-          <SearchBar onSelectFont={handleSearchSelect} />
+          <GlobalSearchBar />
 
           {/* Spacer */}
           <div className="w-10 flex-shrink-0" />
@@ -197,15 +197,11 @@ export default function Index() {
       </header>
 
       {/* Navigation */}
-      <div className="container mx-auto px-6 md:px-12 py-6">
-        <a 
-          href="#" 
-          className="inline-flex items-center gap-2 text-sm text-foreground hover:text-muted-foreground transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to map
-        </a>
-      </div>
+      <nav className="border-b border-border/50">
+        <div className="container mx-auto px-6 md:px-12 py-3 flex items-center gap-6">
+          <span className="text-sm font-medium">Font Pairing Tool</span>
+        </div>
+      </nav>
 
       {/* Tabs */}
       <div className="container mx-auto px-6 md:px-12 pb-8">
