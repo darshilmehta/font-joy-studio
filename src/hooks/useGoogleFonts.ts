@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface GoogleFontData {
@@ -14,6 +15,11 @@ export interface GoogleFontData {
   foundry: string;
   foundrySlug: string;
   legibility: "high" | "medium" | "low";
+  designers?: string[];
+  popularity?: number;
+  trending?: number;
+  dateAdded?: string;
+  classifications?: string[];
 }
 
 interface GoogleFontsResponse {
@@ -37,12 +43,6 @@ export function useGoogleFonts(options: UseGoogleFontsOptions = {}) {
   return useQuery({
     queryKey: ["google-fonts", search, category, sort, limit],
     queryFn: async (): Promise<GoogleFontsResponse> => {
-      const params = new URLSearchParams();
-      if (search) params.set("search", search);
-      if (category) params.set("category", category);
-      if (sort) params.set("sort", sort);
-      if (limit > 0) params.set("limit", limit.toString());
-
       // Use supabase.functions.invoke with query params in body
       const { data, error } = await supabase.functions.invoke("google-fonts", {
         body: { search, category, sort, limit },
@@ -72,4 +72,38 @@ export function useAllFonts() {
   return useGoogleFonts({
     sort: "popularity",
   });
+}
+
+export function useFontsByDesigner(designerSlug: string) {
+  const { data, isLoading, error } = useGoogleFonts({
+    enabled: designerSlug.length > 0,
+  });
+
+  // Filter fonts by designer slug
+  const fonts = useMemo(() => {
+    if (!data?.fonts) return [];
+    return data.fonts.filter(font => {
+      // Check if foundrySlug matches
+      if (font.foundrySlug === designerSlug) return true;
+      // Check if any designer slug matches
+      return font.designers?.some(d => {
+        const slug = d.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        return slug === designerSlug;
+      });
+    });
+  }, [data?.fonts, designerSlug]);
+
+  // Get designer name from first matching font
+  const designerName = useMemo(() => {
+    if (fonts.length === 0) return null;
+    const font = fonts[0];
+    // Find matching designer name
+    const matchingDesigner = font.designers?.find(d => {
+      const slug = d.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      return slug === designerSlug;
+    });
+    return matchingDesigner || font.foundry;
+  }, [fonts, designerSlug]);
+
+  return { fonts, designerName, isLoading, error };
 }
