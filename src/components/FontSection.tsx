@@ -62,7 +62,6 @@ export function FontSection({
             <div
               contentEditable
               suppressContentEditableWarning
-              dangerouslySetInnerHTML={{ __html: defaultText }}
               className={cn(
                 "outline-none transition-all duration-300 animate-fade-in",
                 position === "header" 
@@ -70,7 +69,9 @@ export function FontSection({
                   : "text-base md:text-lg leading-relaxed text-foreground/90"
               )}
               style={{ fontFamily: `"${font.family}", ${font.category}` }}
-            />
+            >
+              {defaultText}
+            </div>
           </div>
 
           {/* Action Icons */}
