@@ -19,7 +19,7 @@ export function GlobalSearchBar() {
   });
 
   const results = useMemo(() => {
-    if (!debouncedQuery.trim()) return { fonts: [], foundries: [], apiFonts: [] };
+    if (!debouncedQuery.trim()) return { fonts: [], foundries: [], apiFonts: [], designers: [] };
     
     const lowerQuery = debouncedQuery.toLowerCase();
     
