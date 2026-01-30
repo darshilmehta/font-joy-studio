@@ -12,7 +12,7 @@ A beautiful, intuitive font pairing tool inspired by [fontjoy.com](https://fontj
 - **👨‍🎨 Designer Discovery** - Browse fonts by designer/foundry
 - **📊 Sort & Filter** - By popularity, trending, date, category
 - **⚡ Instant Preview** - Real-time font loading from Google Fonts CDN
-- **💾 Offline Pairing** - Core pairing works without database connection
+- **💾 Database-Powered** - All font data from Supabase, no hardcoded arrays
 
 ## 🚀 Quick Start
 
@@ -60,7 +60,7 @@ font-joy-studio/
 │   ├── hooks/
 │   │   └── useGoogleFonts.ts    # Database query hook
 │   ├── lib/
-│   │   └── fonts.ts             # Local seed data & pairing logic
+│   │   └── fonts.ts             # Font pairing logic & utilities
 │   ├── pages/                   # Route components
 │   │   ├── Index.tsx            # Main pairing page
 │   │   └── Foundry.tsx          # Designer page
@@ -85,11 +85,12 @@ font-joy-studio/
 ```
 ┌─────────────────────────────────────┐
 │  React Frontend                     │
-│  ├─ Pairing (local seed data)       │
-│  ├─ Search (Supabase queries)       │
+│  ├─ Pairing (database fonts)        │
+│  ├─ Search (database queries)       │
 │  └─ Loading (Google Fonts CDN)      │
 └─────────────────────────────────────┘
-         ↓ Direct connection
+         ↓ Direct connection via
+           @supabase/supabase-js
 ┌─────────────────────────────────────┐
 │  Supabase PostgreSQL                │
 │  ├─ fonts table (1,911 entries)     │
@@ -99,19 +100,28 @@ font-joy-studio/
 
 ### Font Pairing Logic
 
-**Local Seed Data** (`src/lib/fonts.ts`)
+**All Data from Supabase** - No hardcoded arrays!
 
-- Curated list of ~100 high-quality fonts
-- Instant pairing generation (no API calls)
-- Smart complementary selection algorithm
-- Works offline
+**Pairing Algorithm** (`src/lib/fonts.ts`)
 
-**Database Search** (`src/hooks/useGoogleFonts.ts`)
+- Smart complementary font selection
+- Category-based matching (serif ↔ sans-serif)
+- Legibility scoring
+- Random selection from top candidates
 
-- Full Google Fonts catalog
+**Database Integration** (`src/hooks/useGoogleFonts.ts`)
+
+- Fetches 200 most popular fonts on page load
 - Real-time search and filtering
-- Direct Supabase queries
+- Direct Supabase queries (no edge functions)
 - 1-hour cache via React Query
+
+**How Pairing Works:**
+
+1. App loads → Fetches 200 fonts from Supabase
+2. User presses spacebar → Generates pair from fetched fonts
+3. Lock system → Finds complementary font from database
+4. Search → Queries full catalog in real-time
 
 ## 📋 Available Scripts
 
