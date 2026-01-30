@@ -71,3 +71,55 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+# Google Fonts Scripts
+
+This directory contains scripts to fetch and manage the Google Fonts catalog in your Supabase database.
+
+## Setup
+
+1. Make sure you have the required environment variables in your `.env` file:
+
+   ```
+   VITE_SUPABASE_URL=your_supabase_url
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   ```
+
+2. Run the migration to create the database tables:
+   ```bash
+   npx supabase migration up
+   ```
+
+## Scripts
+
+### fetch-google-fonts.js
+
+Fetches the complete Google Fonts catalog and saves it to either JSON or Supabase.
+
+**Save to JSON:**
+
+```bash
+npm run fonts:fetch
+```
+
+**Save to Supabase (first time):**
+
+```bash
+npm run fonts:sync
+```
+
+**Refresh Supabase (clear and re-import):**
+
+```bash
+npm run fonts:refresh
+```
+
+## Environment Variables
+
+- `MODE`: Set to `json` or `supabase` (default: `json`)
+- `REFRESH`: Set to `true` to clear existing fonts before importing (default: `false`)
+
+## Output
+
+- **JSON mode**: Creates `google-fonts.json` in the scripts directory
+- **Supabase mode**: Populates the `fonts` and `foundries` tables in your Supabase database
