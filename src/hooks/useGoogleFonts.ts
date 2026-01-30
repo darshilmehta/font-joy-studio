@@ -38,22 +38,88 @@ interface UseGoogleFontsOptions {
 }
 
 export function useGoogleFonts(options: UseGoogleFontsOptions = {}) {
-  const { search = "", category = "", sort = "popularity", limit = 0, enabled = true } = options;
+  const {
+    search = "",
+    category = "",
+    sort = "popularity",
+    limit = 0,
+    enabled = true,
+  } = options;
 
   return useQuery({
     queryKey: ["google-fonts", search, category, sort, limit],
     queryFn: async (): Promise<GoogleFontsResponse> => {
-      // Use supabase.functions.invoke with query params in body
-      const { data, error } = await supabase.functions.invoke("google-fonts", {
-        body: { search, category, sort, limit },
-      });
+      // Build query
+      let query = supabase.from("fonts").select("*", { count: "exact" });
+
+      // Apply search filter
+      if (search) {
+        const searchLower = search.toLowerCase();
+        query = query.or(
+          `family.ilike.%${searchLower}%,foundry.ilike.%${searchLower}%`,
+        );
+      }
+
+      // Apply category filter
+      if (category && category !== "all") {
+        query = query.eq("category", category);
+      }
+
+      // Apply sorting
+      switch (sort) {
+        case "alpha":
+          query = query.order("family", { ascending: true });
+          break;
+        case "date":
+          query = query.order("date_added", { ascending: false });
+          break;
+        case "trending":
+          query = query.order("trending", { ascending: true });
+          break;
+        case "popularity":
+        default:
+          query = query.order("popularity", { ascending: true });
+          break;
+      }
+
+      // Apply limit
+      if (limit > 0) {
+        query = query.limit(limit);
+      }
+
+      const { data: fonts, error, count } = await query;
 
       if (error) {
         console.error("Error fetching fonts:", error);
         return { fonts: [], total: 0, filtered: 0 };
       }
 
-      return data as GoogleFontsResponse;
+      // Transform database format to API format
+      const transformedFonts = (fonts || []).map((font: any) => ({
+        family: font.family,
+        category: font.category,
+        weights: font.weights,
+        variants: font.variants,
+        subsets: font.subsets,
+        version: font.version,
+        lastModified: font.last_modified,
+        files: font.files,
+        menu: font.menu_url,
+        foundry: font.foundry,
+        foundrySlug: font.foundry_slug,
+        legibility: font.legibility,
+        designers: font.designers,
+        popularity: font.popularity,
+        trending: font.trending,
+        dateAdded: font.date_added,
+        classifications: font.classifications,
+      }));
+
+      return {
+        fonts: transformedFonts,
+        total: count || 0,
+        filtered: transformedFonts.length,
+      };
     },
     enabled,
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
@@ -82,12 +148,15 @@ export function useFontsByDesigner(designerSlug: string) {
   // Filter fonts by designer slug
   const fonts = useMemo(() => {
     if (!data?.fonts) return [];
-    return data.fonts.filter(font => {
+    return data.fonts.filter((font) => {
       // Check if foundrySlug matches
       if (font.foundrySlug === designerSlug) return true;
       // Check if any designer slug matches
-      return font.designers?.some(d => {
-        const slug = d.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      return font.designers?.some((d) => {
+        const slug = d
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "");
         return slug === designerSlug;
       });
     });
@@ -98,8 +167,11 @@ export function useFontsByDesigner(designerSlug: string) {
     if (fonts.length === 0) return null;
     const font = fonts[0];
     // Find matching designer name
-    const matchingDesigner = font.designers?.find(d => {
-      const slug = d.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const matchingDesigner = font.designers?.find((d) => {
+      const slug = d
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
       return slug === designerSlug;
     });
     return matchingDesigner || font.foundry;
