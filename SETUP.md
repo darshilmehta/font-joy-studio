@@ -86,29 +86,71 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 
 ## Step 3: Create Database Tables
 
-### 3.1 Open Supabase SQL Editor
+### Option A: Using Supabase CLI (Recommended)
+
+The recommended way to set up your database is using Supabase CLI migrations:
+
+**3.1 Install Supabase CLI**
+
+```bash
+# macOS/Linux
+brew install supabase/tap/supabase
+
+# Windows (via npm)
+npm install -g supabase
+
+# Or via npm on any OS
+npm install -g supabase
+```
+
+**3.2 Link to Your Project**
+
+```bash
+# Initialize Supabase in your project
+supabase init
+
+# Link to your remote project
+supabase link --project-ref your-project-ref
+```
+
+Get your project ref from: Supabase Dashboard → Project Settings → General → Reference ID
+
+**3.3 Run Migrations**
+
+```bash
+# Apply all migrations to your database
+supabase db push
+```
+
+This will create:
+
+- ✅ `fonts` table with all necessary columns and indexes
+- ✅ `foundries` table for designer information
+- ✅ Row Level Security (RLS) policies for public read access
+- ✅ Indexes for fast queries
+- ✅ Automatic updated_at triggers
+
+**3.4 Verify Tables Created**
+
+```bash
+# Check migration status
+supabase migration list
+```
+
+Or go to **Table Editor** in Supabase dashboard and confirm:
+
+- ✅ `fonts` table (empty)
+- ✅ `foundries` table (empty)
+
+### Option B: Manual SQL Editor (Alternative)
+
+If you prefer not to use the CLI:
 
 1. Go to your Supabase dashboard
 2. Click **SQL Editor** in the left sidebar
 3. Click **New Query**
-
-### 3.2 Run the Table Creation Script
-
-Copy the contents of `scripts/create-empty-tables.sql` and paste into the SQL editor, then click **Run**.
-
-This will create:
-
-- `fonts` table with all necessary columns and indexes
-- `foundries` table for designer information
-- Row Level Security (RLS) policies for public read access
-- Indexes for fast queries
-
-### 3.3 Verify Tables Created
-
-Go to **Table Editor** in Supabase and confirm you see:
-
-- ✅ `fonts` table (empty)
-- ✅ `foundries` table (empty)
+4. Copy the contents of `supabase/migrations/20240101000000_initial_schema.sql`
+5. Paste into the SQL editor and click **Run**
 
 ---
 
@@ -295,12 +337,16 @@ npm run fonts:sync
 
 ### "Tables don't exist"
 
-**Solution:** Run the SQL script again
+**Solution:** Run migrations
 
-1. Open `scripts/create-empty-tables.sql`
-2. Copy contents
-3. Paste in Supabase SQL Editor
-4. Click Run
+```bash
+# Using Supabase CLI (recommended)
+supabase db push
+
+# Or manually via SQL Editor
+# Copy supabase/migrations/20240101000000_initial_schema.sql
+# Paste in Supabase SQL Editor and run
+```
 
 ### "Font pairing not working"
 
@@ -345,13 +391,15 @@ font-joy-studio/
 │   ├── hooks/
 │   │   └── useGoogleFonts.ts    # Database queries hook
 │   ├── lib/
-│   │   └── fonts.ts             # Local seed data & pairing logic
+│   │   └── fonts.ts             # Font pairing logic & utilities
 │   ├── pages/                   # Route components
 │   └── integrations/
 │       └── supabase/            # Supabase client & types
+├── supabase/
+│   └── migrations/              # Database migrations
+│       └── 20240101000000_initial_schema.sql
 ├── scripts/
-│   ├── create-empty-tables.sql  # Database schema
-│   └── fetch-google-fonts.js    # Import script
+│   └── fetch-google-fonts.js    # Font import script
 ├── .env                         # Your credentials (gitignored)
 ├── .env.example                 # Template
 └── package.json                 # Dependencies & scripts

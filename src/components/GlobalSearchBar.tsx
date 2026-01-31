@@ -1,12 +1,16 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Loader2 } from "lucide-react";
-import { loadGoogleFont } from "@/lib/fonts";
-import { useGoogleFonts, GoogleFontData } from "@/hooks/useGoogleFonts";
+import { loadGoogleFont, FontData } from "@/lib/fonts";
+import { useGoogleFonts } from "@/hooks/useGoogleFonts";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
 
-export function GlobalSearchBar() {
+interface GlobalSearchBarProps {
+  onFontSelect?: (font: FontData) => void;
+}
+
+export function GlobalSearchBar({ onFontSelect }: GlobalSearchBarProps) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -59,12 +63,36 @@ export function GlobalSearchBar() {
   const hasResults = results.fonts.length > 0 || results.designers.length > 0;
   const totalFonts = results.fonts.length;
 
-  const handleSelectFont = (family: string, foundrySlug?: string) => {
-    // Navigate to the font's foundry page
-    if (foundrySlug) {
-      navigate(`/foundry/${foundrySlug}`);
+  const handleSelectFont = (font: {
+    family: string;
+    category: string;
+    weights: number[];
+    foundry: string;
+    foundrySlug: string;
+    legibility: string;
+  }) => {
+    // If callback provided, use it to select the font for pairing
+    if (onFontSelect) {
+      const fontData: FontData = {
+        family: font.family,
+        category: font.category as
+          | "sans-serif"
+          | "serif"
+          | "display"
+          | "handwriting"
+          | "monospace",
+        weights: font.weights,
+        foundry: font.foundry,
+        foundrySlug: font.foundrySlug,
+        legibility: font.legibility as "high" | "medium" | "low",
+      };
+      onFontSelect(fontData);
+    } else if (font.foundrySlug) {
+      // Otherwise navigate to the font's foundry page
+      navigate(`/foundry/${font.foundrySlug}`);
     }
     setQuery("");
+    setIsFocused(false);
   };
 
   const handleSelectFoundry = (slug: string) => {
@@ -143,11 +171,11 @@ export function GlobalSearchBar() {
                 )}
               </div>
 
-              {/* Local fonts first */}
+              {/* Fonts from database */}
               {results.fonts.map((font) => (
                 <button
                   key={font.family}
-                  onClick={() => handleSelectFont(font.family)}
+                  onClick={() => handleSelectFont(font)}
                   className={cn(
                     "w-full px-5 py-3 text-left",
                     "hover:bg-secondary transition-colors duration-150",

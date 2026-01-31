@@ -233,7 +233,7 @@ export default function Index() {
     >
       {/* Header */}
       <header className="border-b border-border/50">
-        <div className="container mx-auto px-6 md:px-12 py-4 flex items-center justify-between gap-4">
+        <div className="container mx-auto px-6 md:px-12 py-4 flex items-center gap-4">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
             <div className="w-10 h-10 bg-foreground rounded-lg flex items-center justify-center">
@@ -242,22 +242,24 @@ export default function Index() {
           </Link>
 
           {/* Search */}
-          <GlobalSearchBar />
-
-          {/* Spacer */}
-          <div className="w-10 flex-shrink-0" />
+          <GlobalSearchBar
+            onFontSelect={(font) => handleSearchSelect(font, "header")}
+          />
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="border-b border-border/50">
-        <div className="container mx-auto px-6 md:px-12 py-3 flex items-center gap-6">
-          <span className="text-sm font-medium">Font Pairing Tool</span>
-        </div>
-      </nav>
+      {/* Back to map */}
+      <div className="container mx-auto px-6 md:px-12 py-4">
+        <Link
+          to="/pairing"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 inline-flex"
+        >
+          <span>←</span> Back to map
+        </Link>
+      </div>
 
       {/* Tabs */}
-      <div className="container mx-auto px-6 md:px-12 pb-8">
+      <div className="container px-6 md:px-12 pb-8">
         <TabNav activeTab={activeTab} onTabChange={handleTabChange} />
       </div>
 

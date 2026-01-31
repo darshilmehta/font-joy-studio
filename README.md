@@ -26,8 +26,10 @@ npm install
 cp .env.example .env
 # Edit .env with your Supabase credentials
 
-# 3. Create database tables
-# Copy scripts/create-empty-tables.sql to Supabase SQL Editor and run
+# 3. Create database tables (using Supabase CLI)
+supabase init
+supabase link --project-ref your-project-ref
+supabase db push
 
 # 4. Import Google Fonts
 npm run fonts:sync
@@ -68,8 +70,10 @@ font-joy-studio/
 │       └── supabase/
 │           ├── client.ts        # Supabase client
 │           └── types.ts         # Database types
+├── supabase/
+│   └── migrations/              # Database migrations (Supabase CLI)
+│       └── 20240101000000_initial_schema.sql
 ├── scripts/
-│   ├── create-empty-tables.sql  # Database schema
 │   └── fetch-google-fonts.js    # Font import script
 ├── .env.example                 # Environment template
 ├── SETUP.md                     # Detailed setup guide
@@ -151,8 +155,24 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 ### Create Database Tables
 
+**Using Supabase CLI (Recommended):**
+
+```bash
+# Install Supabase CLI
+npm install -g supabase
+
+# Initialize and link to your project
+supabase init
+supabase link --project-ref your-project-ref
+
+# Run migrations
+supabase db push
+```
+
+**Or manually via SQL Editor:**
+
 1. Open Supabase Dashboard → SQL Editor
-2. Copy contents of `scripts/create-empty-tables.sql`
+2. Copy contents of `supabase/migrations/20240101000000_initial_schema.sql`
 3. Paste and run in SQL Editor
 
 This creates:
@@ -221,7 +241,7 @@ Click a designer name to:
 
 **Check:**
 
-1. Database tables created: `scripts/create-empty-tables.sql`
+1. Database tables created: `supabase db push` (or run migration manually)
 2. Fonts imported: `npm run fonts:sync`
 3. Environment variables set in `.env`
 

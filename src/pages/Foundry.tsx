@@ -26,7 +26,7 @@ export default function Foundry() {
 
   // Load all fonts from this designer
   useEffect(() => {
-    fonts.forEach(font => loadGoogleFont(font.family, font.weights));
+    fonts.forEach((font) => loadGoogleFont(font.family, font.weights));
   }, [fonts]);
 
   const sortedFonts = useMemo(() => {
@@ -41,12 +41,25 @@ export default function Foundry() {
 
   // Generate a random color for the avatar
   const avatarColor = useMemo(() => {
-    const colors = ["#FF6B35", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD", "#98D8C8"];
-    const hash = (designerName || "").split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const colors = [
+      "#FF6B35",
+      "#4ECDC4",
+      "#45B7D1",
+      "#96CEB4",
+      "#FFEAA7",
+      "#DDA0DD",
+      "#98D8C8",
+    ];
+    const hash = (designerName || "")
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
   }, [designerName]);
 
-  const displayName = designerName || slug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || "Designer";
+  const displayName =
+    designerName ||
+    slug?.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) ||
+    "Designer";
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -71,8 +84,8 @@ export default function Foundry() {
       {/* Navigation */}
       <nav className="border-b border-border/50">
         <div className="container mx-auto px-6 md:px-12 py-3 flex items-center gap-6">
-          <Link 
-            to="/pairing" 
+          <Link
+            to="/pairing"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Font Pairing Tool
@@ -92,21 +105,21 @@ export default function Foundry() {
           {/* Foundry Profile */}
           <div className="py-16 text-center border-b border-border/50">
             {/* Avatar */}
-            <div 
+            <div
               className="w-28 h-28 rounded-full mx-auto mb-6"
               style={{ backgroundColor: avatarColor }}
             />
-            
+
             {/* Name */}
             <h1 className="text-3xl font-semibold mb-2 flex items-center justify-center gap-2">
               {displayName}
             </h1>
-            
+
             {/* Font count */}
             <p className="text-muted-foreground mb-6">
-              {fonts.length} font{fonts.length !== 1 ? 's' : ''} on Google Fonts
+              {fonts.length} font{fonts.length !== 1 ? "s" : ""} on Google Fonts
             </p>
-            
+
             {/* Follow Button */}
             <Button variant="outline" className="rounded-full px-8">
               Follow
@@ -132,7 +145,10 @@ export default function Foundry() {
             <div className="container mx-auto px-6 md:px-12 py-4 flex items-center justify-between gap-6">
               <div className="flex items-center gap-6">
                 {/* Weight Selector */}
-                <Select value={selectedWeight} onValueChange={setSelectedWeight}>
+                <Select
+                  value={selectedWeight}
+                  onValueChange={setSelectedWeight}
+                >
                   <SelectTrigger className="w-32">
                     <SelectValue />
                   </SelectTrigger>
@@ -151,7 +167,9 @@ export default function Foundry() {
 
                 {/* Size Slider */}
                 <div className="flex items-center gap-4">
-                  <span className="text-sm text-muted-foreground w-8">{fontSize}</span>
+                  <span className="text-sm text-muted-foreground w-8">
+                    {fontSize}
+                  </span>
                   <Slider
                     value={[fontSize]}
                     onValueChange={([value]) => setFontSize(value)}
@@ -164,7 +182,10 @@ export default function Foundry() {
               </div>
 
               {/* Sort */}
-              <Select value={sortBy} onValueChange={(v: "name" | "popularity") => setSortBy(v)}>
+              <Select
+                value={sortBy}
+                onValueChange={(v: "name" | "popularity") => setSortBy(v)}
+              >
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
@@ -180,15 +201,15 @@ export default function Foundry() {
           <main className="flex-1 container mx-auto px-6 md:px-12 py-8">
             <div className="space-y-2">
               {sortedFonts.map((font) => (
-                <FontRow 
-                  key={font.family} 
-                  font={font} 
+                <FontRow
+                  key={font.family}
+                  font={font}
                   fontSize={fontSize}
                   weight={parseInt(selectedWeight)}
                 />
               ))}
             </div>
-            
+
             {fonts.length === 0 && !isLoading && (
               <div className="text-center py-16 text-muted-foreground">
                 No fonts found for this designer.
@@ -201,8 +222,18 @@ export default function Foundry() {
             <div className="container mx-auto px-6 md:px-12 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <span>© 2025 FontPair</span>
-                <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-                <Link to="/pairing" className="hover:text-foreground transition-colors">Font Pairing</Link>
+                <Link
+                  to="/"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Home
+                </Link>
+                <Link
+                  to="/pairing"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Font Pairing
+                </Link>
               </div>
             </div>
           </footer>
@@ -220,12 +251,12 @@ interface FontRowProps {
 
 function FontRow({ font, fontSize, weight }: FontRowProps) {
   const [sampleText, setSampleText] = useState(font.family);
-  
+
   // Find the closest available weight
   const closestWeight = useMemo(() => {
     if (font.weights.includes(weight)) return weight;
-    return font.weights.reduce((prev, curr) => 
-      Math.abs(curr - weight) < Math.abs(prev - weight) ? curr : prev
+    return font.weights.reduce((prev, curr) =>
+      Math.abs(curr - weight) < Math.abs(prev - weight) ? curr : prev,
     );
   }, [font.weights, weight]);
 
@@ -238,7 +269,9 @@ function FontRow({ font, fontSize, weight }: FontRowProps) {
         <div
           contentEditable
           suppressContentEditableWarning
-          onBlur={(e) => setSampleText(e.currentTarget.textContent || font.family)}
+          onBlur={(e) =>
+            setSampleText(e.currentTarget.textContent || font.family)
+          }
           className="outline-none"
           style={{
             fontFamily: `"${font.family}", ${font.category}`,
@@ -250,7 +283,7 @@ function FontRow({ font, fontSize, weight }: FontRowProps) {
           {sampleText}
         </div>
       </div>
-      
+
       <a
         href={downloadUrl}
         target="_blank"
@@ -260,7 +293,7 @@ function FontRow({ font, fontSize, weight }: FontRowProps) {
           "text-sm text-muted-foreground hover:text-foreground",
           "border border-border hover:border-foreground",
           "opacity-0 group-hover:opacity-100 transition-all duration-200",
-          "flex-shrink-0"
+          "flex-shrink-0",
         )}
       >
         Download

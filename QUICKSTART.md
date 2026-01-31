@@ -29,15 +29,32 @@ Get these from: Supabase Dashboard → Project Settings → API
 
 ### 3. Create Database Tables
 
-**Important:** No Supabase migrations or edge functions needed! The app uses a new hook (`useGoogleFonts`) that connects directly to the database.
+**Using Supabase CLI (Recommended):**
+
+```bash
+# Install Supabase CLI
+npm install -g supabase
+
+# Initialize Supabase in your project
+supabase init
+
+# Link to your remote project
+supabase link --project-ref your-project-ref
+
+# Apply migrations to create tables
+supabase db push
+```
+
+Get your project ref from: Supabase Dashboard → Project Settings → General → Reference ID
+
+**Or via SQL Editor (Alternative):**
 
 1. Open [Supabase Dashboard](https://app.supabase.com)
-2. Go to **SQL Editor**
-3. Click **New Query**
-4. Copy contents of `scripts/create-empty-tables.sql`
-5. Paste and click **Run**
+2. Go to **SQL Editor** → **New Query**
+3. Copy contents of `supabase/migrations/20240101000000_initial_schema.sql`
+4. Paste and click **Run**
 
-This creates the `fonts` and `foundries` tables with proper indexes and permissions.
+This creates the `fonts` and `foundries` tables with proper indexes, RLS policies, and permissions.
 
 ### 4. Import Google Fonts
 
@@ -123,7 +140,8 @@ Open http://localhost:8080 🎉
 **Key components:**
 
 - `src/hooks/useGoogleFonts.ts` - Direct database queries
-- `src/lib/fonts.ts` - Local seed data for pairing
+- `src/lib/fonts.ts` - Font pairing logic and utilities
+- `supabase/migrations/` - Database schema migrations
 - `scripts/fetch-google-fonts.js` - Font import script
 
 ---
@@ -192,12 +210,21 @@ console.log(import.meta.env.VITE_SUPABASE_URL)
 
 ### "Tables don't exist"
 
-**Solution:** Run SQL script again
+**Solution:** Run migrations
 
-1. Open `scripts/create-empty-tables.sql`
-2. Copy entire contents
-3. Paste in Supabase SQL Editor
-4. Click Run
+```bash
+# Using Supabase CLI (recommended)
+supabase db push
+
+# Verify migration status
+supabase migration list
+```
+
+**Or manually:**
+
+1. Copy `supabase/migrations/20240101000000_initial_schema.sql`
+2. Paste in Supabase SQL Editor
+3. Click Run
 
 ### "Font pairing not working"
 

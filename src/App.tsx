@@ -16,7 +16,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/pairing" replace />} />
+          <Route path="/" element={<Index />} />
           <Route path="/pairing" element={<Index />} />
           <Route path="/foundry/:slug" element={<Foundry />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
